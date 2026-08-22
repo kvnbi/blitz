@@ -1,0 +1,19 @@
+# build output
+*.o
+*.d
+/blitz
+/blitz512
+/perft
+/build/
+
+# training data and networks (regenerate with `blitz datagen` / `tools/train.py`)
+/data*/
+/nets/
+*.nnue
+*.bin
+
+# python
+__pycache__/
+
+# macOS
+.DS_Store
