@@ -24,7 +24,12 @@ else
     CXXFLAGS += -march=native
 endif
 
-all: $(BIN)
+all: hlcheck $(BIN)
+
+$(OBJECTS): .hlstamp
+
+.hlstamp:
+	@echo "$(HL)" > $@
 
 $(BIN): $(OBJECTS)
 	$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
@@ -42,8 +47,13 @@ bench: $(BIN)
 test: $(BIN) perft
 	./tools/run_tests.sh
 
+hlcheck:
+	@if [ ! -f .hlstamp ] || [ "`cat .hlstamp`" != "$(HL)" ]; then \
+		rm -f $(OBJECTS) $(DEPS) .hlstamp; \
+	fi
+
 clean:
-	rm -f $(OBJECTS) $(DEPS) $(BIN) perft
+	rm -f $(OBJECTS) $(DEPS) $(BIN) perft .hlstamp
 
 -include $(DEPS)
-.PHONY: all clean debug bench test
+.PHONY: all clean debug bench test hlcheck

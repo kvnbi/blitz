@@ -1,10 +1,10 @@
 # build output
 *.o
 *.d
-/blitz
-/blitz512
+/blitz*
 /perft
 /build/
+.hlstamp
 
 # training data and networks (regenerate with `blitz datagen` / `tools/train.py`)
 /data*/
