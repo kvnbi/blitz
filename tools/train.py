@@ -21,7 +21,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-# ---- must match src/nnue/arch.h -------------------------------------------
 def _arch(name, default):
     """Read a constant straight out of src/nnue/arch.h.
 
@@ -38,7 +37,6 @@ def _arch(name, default):
     if not m:
         return default
     return int(eval(m.group(1), {"__builtins__": {}}, {}))
-
 
 FT_IN = _arch("FT_IN", 768)
 KING_BUCKETS = _arch("KING_BUCKETS", 8)
@@ -62,11 +60,9 @@ KING_BUCKET_MAP = np.array([
 ], dtype=np.int64)
 
 NUM_FEATURES = KING_BUCKETS * FT_IN
-PAD_IDX = NUM_FEATURES          # never contributes; EmbeddingBag padding_idx
+PAD_IDX = NUM_FEATURES
 MAX_PIECES = 32
 
-
-# ---------------------------------------------------------------------------
 def decode_batch(raw):
     """raw: uint8 array [B, 32] -> (idx_white, idx_black, stm, score, result, bucket).
 
@@ -79,23 +75,20 @@ def decode_batch(raw):
     result = raw[:, 26].astype(np.float32)
     stm = raw[:, 27].astype(np.int64)
 
-    # [b, 64] occupancy mask, LSB = A1
     bits = ((occ[:, None] >> np.arange(64, dtype=np.uint64)[None, :]) & np.uint64(1))
     mask = bits.astype(bool)
 
-    # Piece code per occupied square, in ascending square order.
     codes32 = np.empty((b, MAX_PIECES), dtype=np.int64)
     codes32[:, 0::2] = nibbles & 0xF
     codes32[:, 1::2] = nibbles >> 4
 
     rows, sqs = np.nonzero(mask)
-    order = np.cumsum(mask, axis=1) - 1            # rank of each square within its row
-    piece = codes32[rows, order[rows, sqs]]        # 0..11 = colour*6 + type
+    order = np.cumsum(mask, axis=1) - 1
+    piece = codes32[rows, order[rows, sqs]]
 
     colour = piece // 6
-    ptype = piece % 6                              # 0 pawn .. 5 king
+    ptype = piece % 6
 
-    # King squares per colour.
     wk = np.zeros(b, dtype=np.int64)
     bk = np.zeros(b, dtype=np.int64)
     is_king = ptype == 5
@@ -122,8 +115,6 @@ def decode_batch(raw):
 
     return features(0), features(1), stm, score, result, bucket.astype(np.int64)
 
-
-# ---------------------------------------------------------------------------
 class Net(nn.Module):
     def __init__(self):
         super().__init__()
@@ -132,7 +123,6 @@ class Net(nn.Module):
         self.out_w = nn.Parameter(torch.zeros(OUTPUT_BUCKETS, 2 * HL))
         self.out_b = nn.Parameter(torch.zeros(OUTPUT_BUCKETS))
 
-        # Small init keeps the quantised weights inside int16 from the start.
         nn.init.uniform_(self.ft.weight, -0.05, 0.05)
         with torch.no_grad():
             self.ft.weight[PAD_IDX].zero_()
@@ -142,7 +132,6 @@ class Net(nn.Module):
         acc_w = self.ft(idx_w) + self.ft_bias
         acc_b = self.ft(idx_b) + self.ft_bias
 
-        # "us" first, "them" second, exactly as the engine concatenates them.
         stm_f = stm.view(-1, 1).float()
         us = acc_w * (1 - stm_f) + acc_b * stm_f
         them = acc_b * (1 - stm_f) + acc_w * stm_f
@@ -151,8 +140,6 @@ class Net(nn.Module):
         w = self.out_w[bucket]
         return (x * w).sum(dim=1) + self.out_b[bucket]
 
-
-# ---------------------------------------------------------------------------
 def export(net, path):
     with torch.no_grad():
         ft_w = net.ft.weight[:NUM_FEATURES].cpu().numpy()
@@ -175,7 +162,6 @@ def export(net, path):
         f.write(q(o_w, QB, "output weights").tobytes())
         f.write(q(o_b, QA * QB, "output bias").tobytes())
     print(f"exported {path}", flush=True)
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -235,10 +221,10 @@ def main():
             opt.zero_grad(set_to_none=True)
             loss.backward()
             opt.step()
-            with torch.no_grad():           # keep quantisation headroom
-                net.ft.weight.clamp_(-1.98, 1.98)      # * QA  must fit int16
-                net.out_w.clamp_(-127.0, 127.0)        # * QB  must fit int16
-                net.out_b.clamp_(-1.98, 1.98)          # * QA*QB must fit int16
+            with torch.no_grad():
+                net.ft.weight.clamp_(-1.98, 1.98)
+                net.out_w.clamp_(-127.0, 127.0)
+                net.out_b.clamp_(-1.98, 1.98)
             tot += loss.item() * len(chunk)
             seen += len(chunk)
             if bi % 25 == 0:
@@ -262,9 +248,6 @@ def main():
         print(f"epoch {epoch + 1}/{args.epochs}  train {tot / max(seen,1):.5f}  "
               f"val {val:.5f}  {time.time() - t0:.1f}s", flush=True)
 
-        # Export only when validation actually improved.  With a small dataset
-        # the last epoch is often not the best one, and silently shipping it
-        # would hand the engine a worse network than it already had.
         if val < best_val:
             best_val = val
             export(net, args.out)
@@ -273,7 +256,6 @@ def main():
                   flush=True)
 
     print(f"best validation loss: {best_val:.5f} -> {args.out}", flush=True)
-
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -1,11 +1,8 @@
 """Minimal UCI client used by the test scripts."""
 import subprocess
 
-
 class Engine:
     def __init__(self, path="./blitz", options=None, stderr_path=None):
-        # Engine stderr goes to a file so a crash message survives for inspection
-        # instead of being interleaved with the UCI stream we are parsing.
         self.err = open(stderr_path, "w") if stderr_path else None
         self.p = subprocess.Popen([path], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                   stderr=self.err, text=True, bufsize=1)

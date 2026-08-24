@@ -10,7 +10,6 @@ import time
 import chess
 from uci_driver import Engine
 
-
 def play_clocked(white, black, base_ms, inc_ms, max_plies=300, overhead_ms=10):
     board = chess.Board()
     clock = {chess.WHITE: base_ms, chess.BLACK: base_ms}
@@ -38,8 +37,6 @@ def play_clocked(white, black, base_ms, inc_ms, max_plies=300, overhead_ms=10):
         worst_margin = min(worst_margin, clock[side])
         clock[side] += inc_ms
 
-        # Using more than a fifth of the remaining clock on one move is reckless
-        # even when it does not actually flag.
         if used > 0.2 * (clock[side] + used) and used > 50:
             overuse.append((len(moves), used, clock[side] + used))
 
@@ -51,7 +48,6 @@ def play_clocked(white, black, base_ms, inc_ms, max_plies=300, overhead_ms=10):
 
     result = board.result(claim_draw=True) if board.is_game_over(claim_draw=True) else "unfinished"
     return board, moves, result, worst_margin, overuse
-
 
 def main():
     controls = [(10000, 100), (5000, 0), (3000, 30)]
@@ -74,7 +70,6 @@ def main():
     black.quit()
     print(f"\n{'OK - no flags' if failures == 0 else str(failures) + ' game(s) lost on time'}")
     return 1 if failures else 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

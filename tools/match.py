@@ -12,7 +12,6 @@ import sys
 import chess
 from uci_driver import Engine
 
-
 def openings(count, plies=8, seed=0):
     """Random but legal and roughly balanced opening positions."""
     rng = random.Random(seed)
@@ -30,8 +29,7 @@ def openings(count, plies=8, seed=0):
             out.append(board.fen())
     return out
 
-
-def play(white, black, fen, movetime, max_plies=300):
+def play(white, black, fen, movetime, max_plies=300, limits=None):
     board = chess.Board(fen)
     moves = []
     for eng in (white, black):
@@ -39,7 +37,8 @@ def play(white, black, fen, movetime, max_plies=300):
     while not board.is_game_over(claim_draw=True) and len(moves) < max_plies:
         eng = white if board.turn == chess.WHITE else black
         eng.send("position fen " + fen + (" moves " + " ".join(moves) if moves else ""))
-        eng.send(f"go movetime {movetime}")
+        limit = (limits or {}).get(id(eng)) or f"movetime {movetime}"
+        eng.send("go " + limit)
         best = eng.wait_for("bestmove", collect=True)[-1].split()[1]
         mv = chess.Move.from_uci(best)
         if mv not in board.legal_moves:
@@ -51,21 +50,18 @@ def play(white, black, fen, movetime, max_plies=300):
         return {"1-0": 1.0, "0-1": 0.0}.get(r, 0.5)
     return 0.5
 
-
 def elo(score, n):
     """Elo difference and a 95% confidence interval, from the score rate."""
     if n == 0:
         return 0.0, 0.0
     p = min(max(score / n, 1e-6), 1 - 1e-6)
     e = -400 * math.log10(1 / p - 1)
-    # Standard error of the mean score, propagated through the logistic.
     var = max(score / n - (score / n) ** 2, 1e-9)
     se = math.sqrt(var / n)
     margin = 1.96 * se
     lo = min(max(p - margin, 1e-6), 1 - 1e-6)
     hi = min(max(p + margin, 1e-6), 1 - 1e-6)
     return e, (-400 * math.log10(1 / hi - 1)) - (-400 * math.log10(1 / lo - 1))
-
 
 def parse_opts(text):
     out = {}
@@ -74,7 +70,6 @@ def parse_opts(text):
             k, _, v = part.partition("=")
             out[k.strip()] = v.strip()
     return out
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -118,7 +113,6 @@ def main():
     print(f"B = {args.engine_b} [{args.opts_b or 'defaults'}]")
     print(f"result: A scored {score_a}/{n}  (+{w} ={d} -{l})")
     print(f"Elo(A - B) = {e:+.0f} +/- {err / 2:.0f}  (95% CI)")
-
 
 if __name__ == "__main__":
     sys.exit(main())

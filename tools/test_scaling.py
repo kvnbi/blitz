@@ -19,7 +19,6 @@ POSITIONS = [
     "3r1rk1/p5pp/bpp1pp2/8/q1PP1P2/b3P3/P2NQRPP/1R2B1K1 b - - 6 22",
 ]
 
-
 def time_to_depth(engine_path, threads, depth, hash_mb):
     eng = Engine(engine_path, {"Threads": threads, "Hash": hash_mb, "EvalFile": "none"},
                  stderr_path="/tmp/scale.err")
@@ -36,7 +35,6 @@ def time_to_depth(engine_path, threads, depth, hash_mb):
             nodes.append(int(last[-1].split(" nodes ")[1].split()[0]))
     eng.quit()
     return sum(times), sum(nodes)
-
 
 def main():
     engine = sys.argv[1] if len(sys.argv) > 1 else "./blitz"
@@ -58,7 +56,6 @@ def main():
 
     print("\n  speedup is time-to-depth relative to 1 thread; efficiency is speedup/threads.")
     print("  Lazy SMP typically reaches 1.6-1.8x at 2 threads and 3-4x at 8.")
-
 
 if __name__ == "__main__":
     sys.exit(main())

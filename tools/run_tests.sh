@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# Full correctness suite.  Everything here is checked against an independent
-# reference (python-chess, or a numpy replay of the engine's own integer maths)
-# rather than against values the engine could influence.
 set -u
 cd "$(dirname "$0")/.."
 
@@ -27,7 +24,6 @@ run "self-play, 1 thread"                  python3 tools/test_selfplay.py 3 1
 run "self-play, 8 threads"                 python3 tools/test_selfplay.py 3 8
 run "time management (real clock)"         python3 tools/test_timeman.py
 
-# NNUE tests need a data file and a network; both are cheap to make from scratch.
 echo
 echo "== generating a small sample set for the NNUE tests"
 rm -f "$TMP/sample.bin"

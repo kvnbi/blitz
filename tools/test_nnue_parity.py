@@ -12,15 +12,13 @@ import torch
 
 sys.path.insert(0, "tools")
 from train import (Net, decode_batch, NET_SCALE, export, QA, QB, HL,
-                   NUM_FEATURES, OUTPUT_BUCKETS)  # noqa: E402
-from verify_data import decode as decode_sample  # noqa: E402
-from uci_driver import Engine  # noqa: E402
-
+                   NUM_FEATURES, OUTPUT_BUCKETS)
+from verify_data import decode as decode_sample
+from uci_driver import Engine
 
 def trunc_div(a, b):
     """C++ integer division truncates toward zero; numpy // floors."""
     return np.trunc(a / b).astype(np.int64)
-
 
 def quantised_reference(net, iw, ib, stm, bucket):
     """Replay the engine's exact int16/int64 arithmetic in numpy.
@@ -50,12 +48,10 @@ def quantised_reference(net, iw, ib, stm, bucket):
     v = trunc_div(total, QA) + ob[bucket]
     return trunc_div(v * NET_SCALE, QA * QB)
 
-
 def main():
     data_path = sys.argv[1] if len(sys.argv) > 1 else "/tmp/dg.bin"
     net_path = sys.argv[2] if len(sys.argv) > 2 else "/tmp/parity.nnue"
     n_test = int(sys.argv[3]) if len(sys.argv) > 3 else 200
-    # A different hidden width is a different binary; set BLITZ_HL to match.
     engine_path = sys.argv[4] if len(sys.argv) > 4 else "./blitz"
 
     raw = np.fromfile(data_path, dtype=np.uint8)
@@ -64,9 +60,6 @@ def main():
     rng = np.random.default_rng(1234)
     sel = raw[rng.choice(n, size=min(n_test, n), replace=False)]
 
-    # A randomly initialised net is fine and actually a stronger test than a
-    # trained one: the weights are large and varied, so any indexing mistake
-    # shows up as a big disagreement rather than a small one.
     torch.manual_seed(7)
     net = Net()
     with torch.no_grad():
@@ -117,12 +110,10 @@ def main():
     print(f"    mean |diff| : {qloss.mean():.2f} cp")
     print(f"    max  |diff| : {qloss.max():.2f} cp")
 
-    # Implementation parity must be exact; quantisation loss is expected.
     ok = diffs.max() == 0
     print("\nPARITY OK (integer math matches exactly)" if ok
           else "\nPARITY FAILED -- the C++ integer path does not match the reference")
     return 0 if ok else 1
-
 
 if __name__ == "__main__":
     sys.exit(main())

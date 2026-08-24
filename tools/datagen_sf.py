@@ -31,7 +31,6 @@ SCORE_CAP = 4000 * EVAL_SCALE
 ADJUDICATE = 2500 * EVAL_SCALE
 ADJUDICATE_PLIES = 12
 
-
 def encode(board, score_stm):
     occ = 0
     nibbles = bytearray(b"\xff" * 16)
@@ -50,7 +49,6 @@ def encode(board, score_stm):
     s = max(-SCORE_CAP, min(SCORE_CAP, int(score_stm)))
     return struct.pack("<Q16shBB4x", occ, bytes(nibbles), s, 1,
                        0 if board.turn == chess.WHITE else 1)
-
 
 def play_game(eng, rng, nodes, opening_plies):
     board = chess.Board()
@@ -105,7 +103,6 @@ def play_game(eng, rng, nodes, opening_plies):
         out.append(rec[:26] + bytes([r]) + rec[27:])
     return out
 
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("out")
@@ -140,7 +137,6 @@ def main():
                       end="", flush=True)
     eng.quit()
     print(f"\ndone: {written} positions to {args.out}")
-
 
 if __name__ == "__main__":
     sys.exit(main())

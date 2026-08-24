@@ -7,14 +7,12 @@ import sys
 import chess
 from uci_driver import Engine
 
-
 def mate_in(board, plies):
     """Return the shortest forced mate for the side to move, in plies, or None."""
     for d in range(1, plies + 1):
         if forced_mate(board, d):
             return d
     return None
-
 
 def forced_mate(board, plies):
     if plies <= 0:
@@ -30,7 +28,6 @@ def forced_mate(board, plies):
             return True
     return False
 
-
 def all_replies_lose(board, plies):
     if not any(board.legal_moves):
         return False
@@ -41,7 +38,6 @@ def all_replies_lose(board, plies):
         if not ok:
             return False
     return True
-
 
 POSITIONS = [
     "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1",
@@ -60,12 +56,11 @@ eng = Engine(options={"Hash": 64, "Threads": 1})
 tested = passed = 0
 for fen in POSITIONS:
     board = chess.Board(fen)
-    truth = mate_in(board, 5)          # forced mate within 5 plies (mate in 1, 2 or 3)
+    truth = mate_in(board, 5)
     if truth is None:
         continue
     tested += 1
     best, infos = eng.go(fen, depth=14)
-    # Last reported score for the main pv
     score = None
     for line in infos:
         if " multipv 1 " in line and " score mate " in line:

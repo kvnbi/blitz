@@ -11,7 +11,6 @@ import numpy as np
 
 PIECES = "PNBRQKpnbrqk"
 
-
 def decode(rec):
     occ, = struct.unpack_from("<Q", rec, 0)
     nibbles = rec[8:24]
@@ -31,7 +30,6 @@ def decode(rec):
     board.turn = chess.WHITE if stm == 0 else chess.BLACK
     return board, score, result, i
 
-
 def main(path, limit=200000):
     data = np.memmap(path, dtype=np.uint8, mode="r")
     n = len(data) // 32
@@ -39,8 +37,6 @@ def main(path, limit=200000):
     results = {0: 0, 1: 0, 2: 0}
     scores = []
     pieces = []
-    # Sample across the whole file.  Reading only the head would report just the
-    # first chunk of a concatenated dataset and hide everything appended later.
     rng = np.random.default_rng(0)
     idx = (rng.choice(n, size=min(n, limit), replace=False) if n > limit
            else np.arange(n))
@@ -82,7 +78,6 @@ def main(path, limit=200000):
         print(f"  |score|>2500: {100*(sc>2500).mean():.2f}%   "
               f"won endgames (<=8 pieces & |score|>=2000): {100*((pc<=8)&(sc>=2000)).mean():.3f}%")
     return 1 if bad else 0
-
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else "/tmp/dg.bin"))

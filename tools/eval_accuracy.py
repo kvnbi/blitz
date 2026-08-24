@@ -11,11 +11,10 @@ import sys
 import numpy as np
 
 sys.path.insert(0, "tools")
-from uci_driver import Engine  # noqa: E402
-from verify_data import decode as decode_sample  # noqa: E402
+from uci_driver import Engine
+from verify_data import decode as decode_sample
 
 NET_SCALE = 400.0
-
 
 def main():
     data_path = sys.argv[1] if len(sys.argv) > 1 else "data/all.bin"
@@ -26,8 +25,6 @@ def main():
     raw = np.fromfile(data_path, dtype=np.uint8)
     n = raw.size // 32
     raw = raw[:n * 32].reshape(n, 32)
-    # The trainer shuffles with seed 0 and holds out the first 2%; use that
-    # same slice so these positions were never trained on.
     rng = np.random.default_rng(0)
     perm = rng.permutation(n)
     holdout = raw[perm][: max(1, int(n * 0.02))]
@@ -70,7 +67,6 @@ def main():
     m_h = report("hce", hce_v)
     print(f"\n  -> {'NNUE' if m_n < m_h else 'HCE'} is the better predictor "
           f"({min(m_n, m_h):.5f} vs {max(m_n, m_h):.5f})")
-
 
 if __name__ == "__main__":
     sys.exit(main())

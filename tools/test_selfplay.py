@@ -8,7 +8,6 @@ import time
 import chess
 from uci_driver import Engine
 
-
 def play_game(white, black, movetime=60, max_plies=300, start_fen=None, chess960=False):
     board = chess.Board(start_fen or chess.STARTING_FEN, chess960=chess960)
     moves = []
@@ -28,13 +27,11 @@ def play_game(white, black, movetime=60, max_plies=300, start_fen=None, chess960
         except ValueError:
             return board, moves, f"ILLEGAL-UCI:{best}"
         if mv not in board.legal_moves:
-            # Chess960 castling may come back as king-takes-rook.
             if not (chess960 and board.is_castling(mv)):
                 return board, moves, f"ILLEGAL:{best}"
         board.push(mv)
         moves.append(best)
     return board, moves, "max-plies"
-
 
 def main():
     games = int(sys.argv[1]) if len(sys.argv) > 1 else 4
@@ -61,7 +58,6 @@ def main():
     black.quit()
     print(f"\n{games - failures}/{games} games completed with only legal moves")
     return 1 if failures else 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -12,7 +12,6 @@ import sys
 from match import elo, openings, play
 from uci_driver import Engine
 
-
 def run_level(engine_a, opts_a, sf_elo, pairs, movetime, seed):
     a = Engine(engine_a, opts_a, stderr_path="/tmp/cal_a.err")
     b = Engine("stockfish",
@@ -37,7 +36,6 @@ def run_level(engine_a, opts_a, sf_elo, pairs, movetime, seed):
     n = pairs * 2
     diff, err = elo(score, n)
     return score / n, diff, err / 2, (w, d, l)
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -69,14 +67,11 @@ def main():
     for lvl, rate, diff, err, est in estimates:
         print(f"  {lvl:>9} {rate:>7.3f} {diff:>+8.0f} {est:>9.0f}")
 
-    # Weight each rung by how informative it is: scores near 0.5 pin the rating
-    # down best, lopsided ones barely constrain it at all.
     usable = [(e, 1.0 / (1.0 + abs(r - 0.5) * 10)) for _, r, _, _, e in estimates]
     total = sum(w for _, w in usable)
     if total:
         print(f"\n  weighted estimate: ~{sum(e*w for e, w in usable)/total:.0f} Elo "
               f"(Stockfish's UCI_Elo scale, approximate)")
-
 
 if __name__ == "__main__":
     sys.exit(main())
