@@ -1,7 +1,14 @@
+import os
 import subprocess
+import sys
+import tempfile
 
 class Engine:
     def __init__(self, path="./blitz", options=None, stderr_path=None):
+        if sys.platform == "win32" and not path.endswith(".exe"):
+            path += ".exe"
+        if stderr_path:
+            stderr_path = os.path.join(tempfile.gettempdir(), os.path.basename(stderr_path))
         self.err = open(stderr_path, "w") if stderr_path else None
         self.p = subprocess.Popen([path], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                   stderr=self.err, text=True, bufsize=1)

@@ -6,14 +6,29 @@ on:
     tags: ["v*"]
   workflow_dispatch:
 
+env:
+  FASTCHESS: https://github.com/Disservin/fastchess/releases/download/v1.8.2-alpha
+
 jobs:
   linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - run: make -j4 CXX=g++ ARCH=x86-64-avx2
       - run: './blitz bench | grep -E "Nodes +: 339318$"'
       - run: 'printf "nnuecheck 50\nquit\n" | ./blitz | grep -E "compared, 0 mismatches$"'
+      - run: pip install chess
+      - run: python tools/test_mates.py
+      - run: python tools/test_repetition.py
+      - run: python tools/test_selfplay.py 2 1
+      - run: python tools/test_selfplay.py 2 4
+      - run: python tools/test_timeman.py
+      - run: curl -sL $FASTCHESS/fastchess-linux-x86-64.tar | tar -x
+      - run: ./fastchess-linux-x86-64/fastchess -engine cmd=./blitz name=a -engine cmd=./blitz name=b -each proto=uci tc=5+0.05 option.Hash=32 -rounds 10 -games 2 -repeat -concurrency 2 | tee match.txt
+      - run: 'grep -q "Finished match" match.txt && test "$(grep -c "^Finished game" match.txt)" = 20 && ! grep -iE "on time|illegal|disconnect|stall|timeout|crash" match.txt'
       - uses: actions/upload-artifact@v4
         with:
           name: blitz-linux-x86-64-avx2
@@ -21,19 +36,41 @@ jobs:
 
   windows:
     runs-on: windows-latest
-    defaults:
-      run:
-        shell: msys2 {0}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
           install: make mingw-w64-x86_64-gcc
-      - run: make -j4 CXX=g++ ARCH=x86-64-avx2
-      - run: 'objdump -p blitz.exe > imports.txt && ! grep -iE "libstdc|libgcc|libwinpthread" imports.txt'
-      - run: './blitz.exe bench | grep -E "Nodes +: 339318$"'
-      - run: 'printf "nnuecheck 50\nquit\n" | ./blitz.exe | grep -E "compared, 0 mismatches$"'
+      - shell: msys2 {0}
+        run: make -j4 CXX=g++ ARCH=x86-64-avx2
+      - shell: msys2 {0}
+        run: 'objdump -p blitz.exe > imports.txt && ! grep -iE "libstdc|libgcc|libwinpthread" imports.txt'
+      - shell: bash
+        run: './blitz.exe bench | grep -E "Nodes +: 339318$"'
+      - shell: bash
+        run: 'printf "nnuecheck 50\nquit\n" | ./blitz.exe | grep -E "compared, 0 mismatches$"'
+      - shell: bash
+        run: pip install chess
+      - shell: bash
+        run: python tools/test_mates.py
+      - shell: bash
+        run: python tools/test_repetition.py
+      - shell: bash
+        run: python tools/test_selfplay.py 2 1
+      - shell: bash
+        run: python tools/test_selfplay.py 2 4
+      - shell: bash
+        run: python tools/test_timeman.py
+      - shell: bash
+        run: curl -sL -o fc.zip $FASTCHESS/fastchess-windows-x86-64.zip && python -c "import zipfile; zipfile.ZipFile('fc.zip').extractall('fc')"
+      - shell: bash
+        run: ./fc/fastchess-windows-x86-64/fastchess.exe -engine cmd=./blitz.exe name=a -engine cmd=./blitz.exe name=b -each proto=uci tc=5+0.05 option.Hash=32 -rounds 10 -games 2 -repeat -concurrency 2 | tee match.txt
+      - shell: bash
+        run: 'grep -q "Finished match" match.txt && test "$(grep -c "^Finished game" match.txt)" = 20 && ! grep -iE "on time|illegal|disconnect|stall|timeout|crash" match.txt'
       - uses: actions/upload-artifact@v4
         with:
           name: blitz-windows-x86-64-avx2
@@ -43,9 +80,21 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - run: make -j4 ARCH=arm64
       - run: './blitz bench | grep -E "Nodes +: 339318$"'
       - run: 'printf "nnuecheck 50\nquit\n" | ./blitz | grep -E "compared, 0 mismatches$"'
+      - run: pip install chess
+      - run: python tools/test_mates.py
+      - run: python tools/test_repetition.py
+      - run: python tools/test_selfplay.py 2 1
+      - run: python tools/test_selfplay.py 2 4
+      - run: python tools/test_timeman.py
+      - run: curl -sL $FASTCHESS/fastchess-mac-arm64.tar | tar -x
+      - run: ./fastchess-mac-arm64/fastchess -engine cmd=./blitz name=a -engine cmd=./blitz name=b -each proto=uci tc=5+0.05 option.Hash=32 -rounds 10 -games 2 -repeat -concurrency 2 | tee match.txt
+      - run: 'grep -q "Finished match" match.txt && test "$(grep -c "^Finished game" match.txt)" = 20 && ! grep -iE "on time|illegal|disconnect|stall|timeout|crash" match.txt'
       - uses: actions/upload-artifact@v4
         with:
           name: blitz-macos-arm64
