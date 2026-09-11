@@ -8,8 +8,10 @@
 #include "thread.h"
 #include "tt.h"
 #include "uci.h"
+#include <algorithm>
 #include <atomic>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <deque>
 #include <mutex>

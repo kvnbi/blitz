@@ -1,6 +1,7 @@
 #include "movepick.h"
 #include "position.h"
 #include <algorithm>
+#include <limits>
 
 namespace blitz {
 

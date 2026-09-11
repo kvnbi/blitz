@@ -4,6 +4,7 @@
 #include "thread.h"
 #include "tt.h"
 #include "uci.h"
+#include <algorithm>
 #include <cstdlib>
 #include <deque>
 #include <iostream>
