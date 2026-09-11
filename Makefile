@@ -14,7 +14,7 @@ CXXFLAGS ?= -std=c++20 -O3 -DNDEBUG -flto -fno-exceptions -fno-rtti \
             -Wall -Wextra -Wno-unused-parameter -MMD -MP -I$(SRCDIR)
 LDFLAGS  ?= -flto -pthread
 
-HL ?= 1024
+HL ?= 128
 CXXFLAGS += -DBLITZ_HL=$(HL)
 
 ifneq ($(shell cat .hlstamp 2>/dev/null),$(HL))

@@ -134,11 +134,18 @@ bool chess960()       { return g_opt.chess960; }
 bool ponder_enabled() { return g_opt.ponder; }
 bool show_wdl()       { return g_opt.showWDL; }
 
+bool load_network(const std::string& path) {
+    if (nnue::load(path)) return true;
+    const std::string& dir = binary_directory();
+    return !dir.empty() && path.find_first_of("/\\") == std::string::npos
+        && nnue::load(dir + path);
+}
+
 void init() {
     Threads.set(size_t(g_opt.threads));
     TT.resize(size_t(g_opt.hash), g_opt.threads);
-    if (nnue::load(g_opt.evalFile))
-        sync_cout << "info string NNUE network loaded: " << g_opt.evalFile << sync_endl;
+    if (load_network(g_opt.evalFile))
+        sync_cout << "info string NNUE network loaded: " << nnue::net_name() << sync_endl;
     else
         sync_cout << "info string No NNUE network found, using the hand-crafted evaluation"
                   << sync_endl;
@@ -176,8 +183,8 @@ void set(const std::string& name, const std::string& value) {
             nnue::unload();
             sync_cout << "info string NNUE disabled, using the hand-crafted evaluation"
                       << sync_endl;
-        } else if (nnue::load(value)) {
-            sync_cout << "info string NNUE network loaded: " << value << sync_endl;
+        } else if (load_network(value)) {
+            sync_cout << "info string NNUE network loaded: " << nnue::net_name() << sync_endl;
         } else {
             sync_cout << "info string Could not load network " << value << sync_endl;
         }

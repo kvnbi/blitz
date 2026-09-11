@@ -12,6 +12,7 @@
 int main(int argc, char** argv) {
     using namespace blitz;
 
+    set_binary_directory(argv[0]);
     std::cout << engine_info() << std::endl;
 
     bitboards_init();

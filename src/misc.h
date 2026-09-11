@@ -25,6 +25,8 @@ void* aligned_large_pages_alloc(size_t size);
 void  aligned_large_pages_free(void* ptr);
 
 std::vector<std::string> split(const std::string& s, char delim);
+void set_binary_directory(const char* argv0);
+std::string binary_directory();
 std::string engine_info();
 
 }

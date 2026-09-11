@@ -1,19 +1,11 @@
-# build output
 *.o
 *.d
-/blitz*
+/blitz
 /perft
 /build/
 .hlstamp
-
-# training data and networks (regenerate with `blitz datagen` / `tools/train.py`)
 /data*/
 /nets/
-*.nnue
 *.bin
-
-# python
 __pycache__/
-
-# macOS
 .DS_Store

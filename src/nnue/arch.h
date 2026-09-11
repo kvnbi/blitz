@@ -4,7 +4,7 @@
 namespace blitz::nnue {
 
 #ifndef BLITZ_HL
-    #define BLITZ_HL 1024
+    #define BLITZ_HL 128
 #endif
 
 constexpr int FT_IN          = 768;

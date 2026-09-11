@@ -120,6 +120,7 @@ class Net(nn.Module):
         return (x * w).sum(dim=1) + self.out_b[bucket]
 
 def export(net, path):
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     with torch.no_grad():
         ft_w = net.ft.weight[:NUM_FEATURES].cpu().numpy()
         ft_b = net.ft_bias.cpu().numpy()
@@ -145,7 +146,7 @@ def export(net, path):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("data", help="datagen .bin file")
-    ap.add_argument("-o", "--out", default="blitz.nnue")
+    ap.add_argument("-o", "--out", default="nets/latest.nnue")
     ap.add_argument("--epochs", type=int, default=10)
     ap.add_argument("--batch", type=int, default=8192)
     ap.add_argument("--lr", type=float, default=1e-3)

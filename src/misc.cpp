@@ -36,6 +36,16 @@ std::vector<std::string> split(const std::string& s, char delim) {
     return out;
 }
 
-std::string engine_info() { return "Blitz 1.0"; }
+std::string g_binaryDir;
+
+void set_binary_directory(const char* argv0) {
+    std::string s(argv0 ? argv0 : "");
+    size_t pos = s.find_last_of("/\\");
+    g_binaryDir = pos == std::string::npos ? "" : s.substr(0, pos + 1);
+}
+
+std::string binary_directory() { return g_binaryDir; }
+
+std::string engine_info() { return "Blitz 2.0"; }
 
 }
