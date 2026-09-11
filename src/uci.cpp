@@ -38,7 +38,7 @@ struct OptionValues {
     int  hash = 64;
     int  threads = 1;
     int  multiPV = 1;
-    int  moveOverhead = 10;
+    int  moveOverhead = 30;
     bool chess960 = false;
     bool ponder = false;
     bool showWDL = false;
@@ -179,7 +179,7 @@ void set(const std::string& name, const std::string& value) {
     } else if (name == "MultiPV") {
         g_opt.multiPV = num(1, 256, 1);
     } else if (name == "Move Overhead") {
-        g_opt.moveOverhead = num(0, 5000, 10);
+        g_opt.moveOverhead = num(0, 5000, 30);
     } else if (name == "UCI_Chess960") {
         g_opt.chess960 = (value == "true");
     } else if (name == "Ponder") {
@@ -207,7 +207,7 @@ void print_all() {
         << "option name Hash type spin default 64 min 1 max 1048576\n"
         << "option name Threads type spin default 1 min 1 max 1024\n"
         << "option name MultiPV type spin default 1 min 1 max 256\n"
-        << "option name Move Overhead type spin default 10 min 0 max 5000\n"
+        << "option name Move Overhead type spin default 30 min 0 max 5000\n"
         << "option name Ponder type check default false\n"
         << "option name UCI_Chess960 type check default false\n"
         << "option name UCI_ShowWDL type check default false\n"

@@ -54,6 +54,6 @@ void set_binary_directory(const char* argv0) {
 
 std::string binary_directory() { return g_binaryDir; }
 
-std::string engine_info() { return "Blitz 2.0"; }
+std::string engine_info() { return "Blitz 2.1"; }
 
 }

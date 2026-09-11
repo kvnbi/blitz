@@ -27,8 +27,14 @@ jobs:
       - run: python tools/test_selfplay.py 2 4
       - run: python tools/test_timeman.py
       - run: curl -sL $FASTCHESS/fastchess-linux-x86-64.tar | tar -x
-      - run: ./fastchess-linux-x86-64/fastchess -engine cmd=./blitz name=a -engine cmd=./blitz name=b -each proto=uci tc=5+0.05 option.Hash=32 -rounds 10 -games 2 -repeat -concurrency 2 | tee match.txt
+      - run: ./fastchess-linux-x86-64/fastchess -engine cmd=./blitz name=a -engine cmd=./blitz name=b -each proto=uci tc=5+0.05 option.Hash=32 -rounds 10 -games 2 -repeat -concurrency 1 -pgnout file=games.pgn | tee match.txt
       - run: 'grep -q "Finished match" match.txt && test "$(grep -c "^Finished game" match.txt)" = 20 && ! grep -iE "on time|illegal|disconnect|stall|timeout|crash" match.txt'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: games-linux
+          path: games.pgn
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         with:
           name: blitz-linux-x86-64-avx2
@@ -68,9 +74,15 @@ jobs:
       - shell: bash
         run: curl -sL -o fc.zip $FASTCHESS/fastchess-windows-x86-64.zip && python -c "import zipfile; zipfile.ZipFile('fc.zip').extractall('fc')"
       - shell: bash
-        run: ./fc/fastchess-windows-x86-64/fastchess.exe -engine cmd=./blitz.exe name=a -engine cmd=./blitz.exe name=b -each proto=uci tc=5+0.05 option.Hash=32 -rounds 10 -games 2 -repeat -concurrency 2 | tee match.txt
+        run: ./fc/fastchess-windows-x86-64/fastchess.exe -engine cmd=./blitz.exe name=a -engine cmd=./blitz.exe name=b -each proto=uci tc=5+0.05 option.Hash=32 -rounds 10 -games 2 -repeat -concurrency 1 -pgnout file=games.pgn | tee match.txt
       - shell: bash
         run: 'grep -q "Finished match" match.txt && test "$(grep -c "^Finished game" match.txt)" = 20 && ! grep -iE "on time|illegal|disconnect|stall|timeout|crash" match.txt'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: games-windows
+          path: games.pgn
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         with:
           name: blitz-windows-x86-64-avx2
@@ -93,8 +105,14 @@ jobs:
       - run: python tools/test_selfplay.py 2 4
       - run: python tools/test_timeman.py
       - run: curl -sL $FASTCHESS/fastchess-mac-arm64.tar | tar -x
-      - run: ./fastchess-mac-arm64/fastchess -engine cmd=./blitz name=a -engine cmd=./blitz name=b -each proto=uci tc=5+0.05 option.Hash=32 -rounds 10 -games 2 -repeat -concurrency 2 | tee match.txt
+      - run: ./fastchess-mac-arm64/fastchess -engine cmd=./blitz name=a -engine cmd=./blitz name=b -each proto=uci tc=5+0.05 option.Hash=32 -rounds 10 -games 2 -repeat -concurrency 1 -pgnout file=games.pgn | tee match.txt
       - run: 'grep -q "Finished match" match.txt && test "$(grep -c "^Finished game" match.txt)" = 20 && ! grep -iE "on time|illegal|disconnect|stall|timeout|crash" match.txt'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: games-macos
+          path: games.pgn
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         with:
           name: blitz-macos-arm64
