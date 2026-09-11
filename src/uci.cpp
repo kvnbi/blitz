@@ -9,10 +9,11 @@
 #include "timeman.h"
 #include "tt.h"
 #include <algorithm>
-#include <cmath>
-#include <deque>
 #include <cassert>
+#include <cmath>
 #include <cstdlib>
+#include <deque>
+#include <mutex>
 #include <sstream>
 
 namespace blitz {
@@ -58,7 +59,7 @@ u64 perft_nodes(Position& pos, int depth) {
 }
 
 void position_cmd(Position& pos, std::istringstream& is) {
-
+    Threads.stop = true;
     Threads.main()->wait_for_search_finished();
 
     std::string token, fen;
@@ -86,16 +87,22 @@ void go_cmd(Position& pos, std::istringstream& is) {
     std::string token;
     bool ponderMode = false;
 
+    bool inSearchmoves = false;
     while (is >> token) {
-        if (token == "searchmoves") { while (is >> token) limits.searchmoves.push_back(UCI::to_move(pos, token)); }
+        if (inSearchmoves) {
+            Move m = UCI::to_move(pos, token);
+            if (m != Move::none()) { limits.searchmoves.push_back(m); continue; }
+            inSearchmoves = false;
+        }
+        if (token == "searchmoves")    inSearchmoves = true;
         else if (token == "wtime")     is >> limits.time[WHITE];
         else if (token == "btime")     is >> limits.time[BLACK];
         else if (token == "winc")      is >> limits.inc[WHITE];
         else if (token == "binc")      is >> limits.inc[BLACK];
         else if (token == "movestogo") is >> limits.movestogo;
-        else if (token == "depth")     is >> limits.depth;
+        else if (token == "depth")     { is >> limits.depth; limits.depth = std::max(limits.depth, 1); }
         else if (token == "nodes")     is >> limits.nodes;
-        else if (token == "movetime")  is >> limits.movetime;
+        else if (token == "movetime")  { is >> limits.movetime; limits.movetime = std::max<TimePoint>(limits.movetime, 1); }
         else if (token == "mate")      is >> limits.mate;
         else if (token == "perft")     is >> limits.perft;
         else if (token == "infinite")  limits.infinite = true;
@@ -152,6 +159,8 @@ void init() {
 }
 
 void set(const std::string& name, const std::string& value) {
+    Threads.stop = true;
+    Threads.main()->wait_for_search_finished();
 
     auto num = [&](int lo, int hi, int def) {
         char* end = nullptr;
@@ -333,7 +342,7 @@ void loop(int argc, char** argv) {
         }
     } while (token != "quit" && argc == 1);
 
-    Threads.wait_for_search_finished();
+    Threads.main()->wait_for_search_finished();
 }
 
 }

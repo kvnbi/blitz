@@ -37,7 +37,8 @@ private:
 
     Move  refutations_[2] = { Move::none(), Move::none() };
     int   refutationIdx_ = 0;
-    ExtMove *cur_, *endMoves_, *endBadCaptures_, *beginBadQuiets_, *endBadQuiets_;
+    ExtMove *cur_ = moves_, *endMoves_ = moves_, *endBadCaptures_ = moves_;
+    ExtMove *beginBadQuiets_ = moves_, *endBadQuiets_ = moves_;
     int   stage_;
     int   depth_;
     Value threshold_ = VALUE_ZERO;

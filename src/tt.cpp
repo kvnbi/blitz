@@ -1,5 +1,7 @@
 #include "tt.h"
 #include "position.h"
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <thread>
 #include <vector>

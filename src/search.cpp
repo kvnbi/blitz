@@ -9,7 +9,9 @@
 #include "tt.h"
 #include "uci.h"
 #include <algorithm>
+#include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <thread>
@@ -123,7 +125,7 @@ void Search::init() {
 }
 
 void Search::clear() {
-
+    Threads.stop = true;
     Threads.main()->wait_for_search_finished();
     Threads.wait_for_search_finished();
     TT.clear(int(Threads.size()));
@@ -193,7 +195,7 @@ void Thread::search() {
 
     if (nnue::available()) nnue::refresh_accumulator(rootPos, rootPos.state());
 
-    while (++rootDepth < MAX_PLY && !Threads.stop
+    while (++rootDepth < MAX_PLY && (rootDepth == 1 || !Threads.stop)
            && !(Limits.depth && mainThread && rootDepth > Limits.depth)) {
 
         if (!mainThread) {
@@ -207,7 +209,7 @@ void Thread::search() {
         for (RootMove& rm : rootMoves) rm.previousScore = rm.score;
         size_t pvFirst = 0;
 
-        for (pvIdx = 0; pvIdx < size_t(multiPV) && !Threads.stop; ++pvIdx) {
+        for (pvIdx = 0; pvIdx < size_t(multiPV) && (rootDepth == 1 || !Threads.stop); ++pvIdx) {
             selDepth = 0;
 
             Value avg = rootMoves[pvIdx].averageScore;
@@ -230,7 +232,7 @@ void Thread::search() {
                 std::stable_sort(rootMoves.begin() + pvFirst, rootMoves.begin() + pvIdx + 1);
                 std::stable_sort(rootMoves.begin() + pvIdx, rootMoves.end());
 
-                if (Threads.stop) break;
+                if (Threads.stop && rootDepth > 1) break;
 
                 if (mainThread && !Search::Silent && multiPV == 1
                     && (bestValue <= alpha || bestValue >= beta) && Time.elapsed() > 3000)
@@ -257,7 +259,7 @@ void Thread::search() {
                 sync_cout << UCI::pv(*this, rootDepth) << sync_endl;
         }
 
-        if (!Threads.stop) completedDepth = rootDepth;
+        if (!Threads.stop || rootDepth == 1) completedDepth = rootDepth;
 
         if (rootMoves[0].pv[0] != lastBestMove) {
             lastBestMove = rootMoves[0].pv[0];
@@ -640,7 +642,8 @@ moves_loop:
         pos.undo_move(move);
         assert(value > -VALUE_INFINITE && value < VALUE_INFINITE);
 
-        if (Threads.stop.load(std::memory_order_relaxed)) return VALUE_ZERO;
+        if (Threads.stop.load(std::memory_order_relaxed) && (!rootNode || th->rootDepth > 1))
+            return VALUE_ZERO;
 
         if (rootNode) {
             RootMove& rm = *std::find(th->rootMoves.begin(), th->rootMoves.end(), move);

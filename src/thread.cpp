@@ -5,6 +5,9 @@
 #include "uci.h"
 #include <algorithm>
 #include <cassert>
+#include <cstdlib>
+#include <utility>
+#include <vector>
 
 namespace blitz {
 
@@ -37,7 +40,7 @@ void Thread::clear() {
 
 void Thread::start_searching() {
     { std::lock_guard lk(mutex_); searching = true; }
-    cv_.notify_one();
+    cv_.notify_all();
 }
 
 void Thread::wait_for_search_finished() {
@@ -50,7 +53,7 @@ void Thread::idle_loop() {
     while (true) {
         std::unique_lock lk(mutex_);
         searching = false;
-        cv_.notify_one();
+        cv_.notify_all();
         cv_.wait(lk, [&] { return bool(searching); });
         if (exit_) return;
         lk.unlock();
@@ -81,6 +84,7 @@ void ThreadPool::clear() {
 
 void ThreadPool::start_thinking(Position& pos, StateInfo* setupStates,
                                 const Search::LimitsType& limits, bool ponderMode) {
+    stop = true;
     main()->wait_for_search_finished();
 
     main()->stopOnPonderhit = stop = false;
