@@ -39,6 +39,11 @@ inline void acc_add(i16* acc, const i16* w) {
 #if defined(BLITZ_NEON)
     for (int i = 0; i < HL; i += 8)
         vst1q_s16(acc + i, vaddq_s16(vld1q_s16(acc + i), vld1q_s16(w + i)));
+#elif defined(BLITZ_AVX2)
+    for (int i = 0; i < HL; i += 16)
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(acc + i),
+                            _mm256_add_epi16(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(acc + i)),
+                                             _mm256_loadu_si256(reinterpret_cast<const __m256i*>(w + i))));
 #else
     for (int i = 0; i < HL; ++i) acc[i] = i16(acc[i] + w[i]);
 #endif
@@ -48,6 +53,11 @@ inline void acc_sub(i16* acc, const i16* w) {
 #if defined(BLITZ_NEON)
     for (int i = 0; i < HL; i += 8)
         vst1q_s16(acc + i, vsubq_s16(vld1q_s16(acc + i), vld1q_s16(w + i)));
+#elif defined(BLITZ_AVX2)
+    for (int i = 0; i < HL; i += 16)
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(acc + i),
+                            _mm256_sub_epi16(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(acc + i)),
+                                             _mm256_loadu_si256(reinterpret_cast<const __m256i*>(w + i))));
 #else
     for (int i = 0; i < HL; ++i) acc[i] = i16(acc[i] - w[i]);
 #endif
@@ -62,6 +72,15 @@ inline void acc_apply(i16* dst, const i16* src,
         for (int a = 0; a < NAdd; ++a) v = vaddq_s16(v, vld1q_s16(add[a] + i));
         for (int b = 0; b < NSub; ++b) v = vsubq_s16(v, vld1q_s16(sub[b] + i));
         vst1q_s16(dst + i, v);
+    }
+#elif defined(BLITZ_AVX2)
+    for (int i = 0; i < HL; i += 16) {
+        __m256i v = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(src + i));
+        for (int a = 0; a < NAdd; ++a)
+            v = _mm256_add_epi16(v, _mm256_loadu_si256(reinterpret_cast<const __m256i*>(add[a] + i)));
+        for (int b = 0; b < NSub; ++b)
+            v = _mm256_sub_epi16(v, _mm256_loadu_si256(reinterpret_cast<const __m256i*>(sub[b] + i)));
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + i), v);
     }
 #else
     for (int i = 0; i < HL; ++i) {
@@ -94,6 +113,33 @@ i64 screlu_dot(const i16* acc, const i16* w, int n) {
         total = vpadalq_s32(total, s1);
     }
     return vgetq_lane_s64(total, 0) + vgetq_lane_s64(total, 1);
+#elif defined(BLITZ_AVX2)
+    constexpr int FlushEvery = 64;
+    const __m256i zero = _mm256_setzero_si256(), hi = _mm256_set1_epi16(QA);
+    __m256i total = _mm256_setzero_si256();
+
+    for (int base = 0; base < n; base += FlushEvery) {
+        __m256i s = _mm256_setzero_si256();
+        for (int i = base; i < base + FlushEvery; i += 16) {
+            __m256i v  = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(acc + i));
+            __m256i wv = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(w + i));
+            v = _mm256_min_epi16(_mm256_max_epi16(v, zero), hi);
+
+            __m256i v0 = _mm256_unpacklo_epi16(v, zero);
+            __m256i v1 = _mm256_unpackhi_epi16(v, zero);
+            __m256i w0 = _mm256_srai_epi32(_mm256_unpacklo_epi16(zero, wv), 16);
+            __m256i w1 = _mm256_srai_epi32(_mm256_unpackhi_epi16(zero, wv), 16);
+
+            s = _mm256_add_epi32(s, _mm256_mullo_epi32(_mm256_mullo_epi32(v0, w0), v0));
+            s = _mm256_add_epi32(s, _mm256_mullo_epi32(_mm256_mullo_epi32(v1, w1), v1));
+        }
+        total = _mm256_add_epi64(total, _mm256_cvtepi32_epi64(_mm256_castsi256_si128(s)));
+        total = _mm256_add_epi64(total, _mm256_cvtepi32_epi64(_mm256_extracti128_si256(s, 1)));
+    }
+
+    alignas(32) i64 lanes[4];
+    _mm256_store_si256(reinterpret_cast<__m256i*>(lanes), total);
+    return lanes[0] + lanes[1] + lanes[2] + lanes[3];
 #else
     i64 sum = 0;
     for (int i = 0; i < n; ++i) {

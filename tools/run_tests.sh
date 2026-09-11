@@ -6,6 +6,7 @@ TMP=${TMPDIR:-/tmp}/blitz-tests
 mkdir -p "$TMP"
 
 make -s blitz perft || { echo "build failed"; exit 1; }
+export BLITZ_HL=$(cat .hlstamp)
 
 fail=0
 run() {
