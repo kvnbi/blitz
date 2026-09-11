@@ -1,12 +1,3 @@
-"""Generate training data labeled by Stockfish instead of by blitz's own search.
-
-A network can only learn to imitate its teacher. Both networks trained so far
-distilled blitz's own 2450-strength search, which is why neither beat the hand
-written evaluation. Stockfish is a far better teacher and is already installed.
-
-Writes the same 32 byte record the C++ datagen writes, so the rest of the
-pipeline is unchanged.
-"""
 import argparse
 import os
 import random

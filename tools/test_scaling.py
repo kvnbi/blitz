@@ -1,9 +1,3 @@
-"""Measure how the search scales with threads.
-
-Reports time-to-depth, which is the standard proxy for SMP gain: if doubling the
-threads does not meaningfully shorten the time to reach a given depth, the extra
-cores are being wasted no matter how impressive the raw node rate looks.
-"""
 import statistics
 import sys
 import time

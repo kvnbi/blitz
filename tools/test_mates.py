@@ -1,14 +1,8 @@
-"""Verify the engine finds forced mates.
-
-Ground truth is computed independently with python-chess by exhaustive search,
-so this test does not depend on any remembered "expected" values.
-"""
 import sys
 import chess
 from uci_driver import Engine
 
 def mate_in(board, plies):
-    """Return the shortest forced mate for the side to move, in plies, or None."""
     for d in range(1, plies + 1):
         if forced_mate(board, d):
             return d

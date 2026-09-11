@@ -1,8 +1,3 @@
-"""Decode a datagen file and check every sample is a legal, quiet position.
-
-Encoding bugs here are silent poison: the trainer would happily learn from
-garbage, so this is checked independently with python-chess.
-"""
 import struct
 import sys
 

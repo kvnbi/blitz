@@ -1,9 +1,3 @@
-"""Play games on a real clock and check the engine never flags.
-
-Every match so far used a fixed movetime, which never exercises time management.
-A tournament clock is different: the engine has to budget a whole game, and an
-engine that loses on time loses regardless of how good its search is.
-"""
 import sys
 import time
 

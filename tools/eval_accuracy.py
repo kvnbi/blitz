@@ -1,11 +1,3 @@
-"""Compare the NNUE and hand-crafted evaluations as *predictors*, on held-out data.
-
-Playing strength mixes evaluation quality with search speed.  This isolates the
-evaluation: for each held-out position, how well does each evaluator predict the
-label that training targeted (a blend of the search score and the game result)?
-If the network loses here, it is a training problem.  If it wins here but still
-loses games, the problem is the cost of running it.
-"""
 import sys
 
 import numpy as np

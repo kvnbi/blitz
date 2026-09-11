@@ -1,14 +1,3 @@
-"""Train the Blitz NNUE network and export it in the engine's binary format.
-
-Architecture (must stay in step with src/nnue/arch.h):
-
-    (KING_BUCKETS x 768) --EmbeddingBag--> HL   per perspective
-    concat(us, them) -> SCReLU -> per-output-bucket linear -> 1
-
-The network predicts a raw value `y`; the engine reads `y * NET_SCALE` as
-centipawns, and `sigmoid(y)` is trained against a blend of the search score and
-the game result.
-"""
 import argparse
 import os
 import pathlib
@@ -22,12 +11,6 @@ import torch
 import torch.nn as nn
 
 def _arch(name, default):
-    """Read a constant straight out of src/nnue/arch.h.
-
-    These values must match the engine exactly. Parsing the header rather than
-    duplicating the numbers here means they cannot silently drift apart, which
-    has happened before and is invisible until the parity test runs.
-    """
     header = pathlib.Path(__file__).resolve().parent.parent / "src" / "nnue" / "arch.h"
     try:
         text = header.read_text()
@@ -64,10 +47,6 @@ PAD_IDX = NUM_FEATURES
 MAX_PIECES = 32
 
 def decode_batch(raw):
-    """raw: uint8 array [B, 32] -> (idx_white, idx_black, stm, score, result, bucket).
-
-    Fully vectorised; mirrors nnue::feature_index() exactly.
-    """
     b = raw.shape[0]
     occ = raw[:, 0:8].copy().view(np.uint64).reshape(b)
     nibbles = raw[:, 8:24]

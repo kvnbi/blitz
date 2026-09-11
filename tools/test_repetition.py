@@ -1,9 +1,3 @@
-"""Draw detection: perpetual check, the fifty-move rule, and dead-drawn endings.
-
-The perpetual position is verified here to be genuinely forced (Black has exactly
-one legal reply to each check and the four-ply cycle returns to the start), so an
-engine that scores it as anything other than a draw is wrong, not unlucky.
-"""
 import sys
 import chess
 from uci_driver import Engine

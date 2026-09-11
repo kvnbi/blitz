@@ -1,9 +1,3 @@
-"""Find how much handicap Stockfish needs to draw level with blitz.
-
-Blitz plays at a fixed movetime. Stockfish plays at a fixed node count, swept
-until the match is even. Stockfish's known rating then gives blitz a rating on
-the same scale.
-"""
 import argparse
 import sys
 

@@ -1,10 +1,3 @@
-"""Estimate Blitz's absolute rating by playing Stockfish's limited-strength ladder.
-
-Stockfish's UCI_LimitStrength/UCI_Elo gives opponents of approximately known
-rating, so a match against a few rungs pins Blitz down on the same scale.  The
-scale is Stockfish's own calibration and is approximate -- treat the result as a
-band, not a precise number.
-"""
 import argparse
 import math
 import sys

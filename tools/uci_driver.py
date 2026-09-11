@@ -1,4 +1,3 @@
-"""Minimal UCI client used by the test scripts."""
 import subprocess
 
 class Engine:

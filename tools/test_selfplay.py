@@ -1,8 +1,3 @@
-"""Play the engine against itself and validate every move with python-chess.
-
-Catches illegal-move bugs, crashes, hangs, and time-management failures that a
-fixed-depth test would never reach.
-"""
 import sys
 import time
 import chess

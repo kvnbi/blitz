@@ -1,10 +1,3 @@
-"""Play a match between two engine configurations and report the Elo difference.
-
-Used to decide whether a change is actually an improvement. Games are played in
-pairs from the same opening with colours swapped, which removes most of the
-variance caused by the opening itself. Pairs run several at a time, and with
-SPRT the match stops as soon as the result is decisive.
-"""
 import argparse
 import atexit
 import math
@@ -19,7 +12,6 @@ import chess
 from uci_driver import Engine
 
 def openings(count, plies=8, seed=0):
-    """Random but legal and roughly balanced opening positions."""
     rng = random.Random(seed)
     out = []
     while len(out) < count:
@@ -57,7 +49,6 @@ def play(white, black, fen, movetime, max_plies=300, limits=None):
     return 0.5
 
 def elo(score, n):
-    """Elo difference and a 95% confidence interval, from the score rate."""
     if n == 0:
         return 0.0, 0.0
     p = min(max(score / n, 1e-6), 1 - 1e-6)
@@ -73,15 +64,6 @@ def elo_to_score(e):
     return 1.0 / (1.0 + 10 ** (-e / 400.0))
 
 def sprt_llr(pair_scores, elo0, elo1):
-    """Log likelihood ratio over paired game results.
-
-    Each pair contributes a score from 0 to 2. Modelling pairs rather than
-    single games is what keeps the test honest, because the two games in a
-    pair share an opening and are not independent.
-
-    The variance is floored so that a run of identical results cannot report
-    infinite certainty from a handful of pairs.
-    """
     n = len(pair_scores)
     if n < 2:
         return 0.0

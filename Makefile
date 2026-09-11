@@ -17,6 +17,10 @@ LDFLAGS  ?= -flto -pthread
 HL ?= 1024
 CXXFLAGS += -DBLITZ_HL=$(HL)
 
+ifneq ($(shell cat .hlstamp 2>/dev/null),$(HL))
+    $(shell rm -f $(OBJECTS) $(DEPS) .hlstamp)
+endif
+
 UNAME_M := $(shell uname -m)
 ifeq ($(UNAME_M),arm64)
     CXXFLAGS += -mcpu=native
@@ -24,7 +28,7 @@ else
     CXXFLAGS += -march=native
 endif
 
-all: hlcheck $(BIN)
+all: $(BIN)
 
 $(OBJECTS): .hlstamp
 
@@ -47,13 +51,8 @@ bench: $(BIN)
 test: $(BIN) perft
 	./tools/run_tests.sh
 
-hlcheck:
-	@if [ ! -f .hlstamp ] || [ "`cat .hlstamp`" != "$(HL)" ]; then \
-		rm -f $(OBJECTS) $(DEPS) .hlstamp; \
-	fi
-
 clean:
 	rm -f $(OBJECTS) $(DEPS) $(BIN) perft .hlstamp
 
 -include $(DEPS)
-.PHONY: all clean debug bench test hlcheck
+.PHONY: all clean debug bench test

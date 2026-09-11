@@ -1,9 +1,3 @@
-"""Check the C++ NNUE inference against the PyTorch model that produced the net.
-
-A mismatch in feature indexing, perspective ordering, or output bucketing is
-invisible in training but destroys playing strength, so the two implementations
-are compared directly on real positions.
-"""
 import subprocess
 import sys
 
@@ -17,15 +11,9 @@ from verify_data import decode as decode_sample
 from uci_driver import Engine
 
 def trunc_div(a, b):
-    """C++ integer division truncates toward zero; numpy // floors."""
     return np.trunc(a / b).astype(np.int64)
 
 def quantised_reference(net, iw, ib, stm, bucket):
-    """Replay the engine's exact int16/int64 arithmetic in numpy.
-
-    This separates "the two implementations disagree" (a bug) from "int16
-    quantisation loses a few centipawns" (expected).
-    """
     with torch.no_grad():
         ftw = np.round(net.ft.weight[:NUM_FEATURES].numpy() * QA).astype(np.int64)
         ftb = np.round(net.ft_bias.numpy() * QA).astype(np.int64)
