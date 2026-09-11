@@ -3,9 +3,9 @@
 #include <cstring>
 #include <sstream>
 
-#if defined(__APPLE__)
-    #include <sys/mman.h>
-#elif defined(__linux__)
+#if defined(_WIN32)
+    #include <malloc.h>
+#else
     #include <sys/mman.h>
 #endif
 
@@ -15,17 +15,25 @@ void* aligned_large_pages_alloc(size_t size) {
     constexpr size_t Alignment = 4096;
     size = (size + Alignment - 1) / Alignment * Alignment;
 
+#if defined(_WIN32)
+    return _aligned_malloc(size, Alignment);
+#else
     void* mem = nullptr;
     if (posix_memalign(&mem, Alignment, size) != 0) return nullptr;
-
-#if defined(__linux__)
-
+    #if defined(__linux__)
     madvise(mem, size, MADV_HUGEPAGE);
-#endif
+    #endif
     return mem;
+#endif
 }
 
-void aligned_large_pages_free(void* ptr) { std::free(ptr); }
+void aligned_large_pages_free(void* ptr) {
+#if defined(_WIN32)
+    _aligned_free(ptr);
+#else
+    std::free(ptr);
+#endif
+}
 
 std::vector<std::string> split(const std::string& s, char delim) {
     std::vector<std::string> out;

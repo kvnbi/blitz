@@ -1,9 +1,10 @@
 *.o
 *.d
 /blitz
+/blitz.exe
 /perft
 /build/
-.hlstamp
+.stamp
 /data*/
 /nets/
 *.bin

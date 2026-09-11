@@ -1,0 +1,52 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make -j4 CXX=g++ ARCH=x86-64-avx2
+      - run: './blitz bench | grep -E "Nodes +: 339318$"'
+      - run: 'printf "nnuecheck 50\nquit\n" | ./blitz | grep -E "compared, 0 mismatches$"'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: blitz-linux-x86-64-avx2
+          path: blitz
+
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          install: make mingw-w64-x86_64-gcc
+      - run: make -j4 CXX=g++ ARCH=x86-64-avx2
+      - run: 'objdump -p blitz.exe > imports.txt && ! grep -iE "libstdc|libgcc|libwinpthread" imports.txt'
+      - run: './blitz.exe bench | grep -E "Nodes +: 339318$"'
+      - run: 'printf "nnuecheck 50\nquit\n" | ./blitz.exe | grep -E "compared, 0 mismatches$"'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: blitz-windows-x86-64-avx2
+          path: blitz.exe
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make -j4 ARCH=arm64
+      - run: './blitz bench | grep -E "Nodes +: 339318$"'
+      - run: 'printf "nnuecheck 50\nquit\n" | ./blitz | grep -E "compared, 0 mismatches$"'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: blitz-macos-arm64
+          path: blitz

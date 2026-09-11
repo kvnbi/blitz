@@ -1,5 +1,6 @@
 #include "network.h"
 #include "../position.h"
+#include <algorithm>
 #include <cstring>
 #include <fstream>
 
