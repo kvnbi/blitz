@@ -42,7 +42,7 @@ struct OptionValues {
     bool chess960 = false;
     bool ponder = false;
     bool showWDL = false;
-    std::string evalFile = "blitz.nnue";
+    std::string evalFile = nnue::EmbeddedName;
 } g_opt;
 
 u64 perft_nodes(Position& pos, int depth) {
@@ -154,7 +154,7 @@ void init() {
     if (load_network(g_opt.evalFile))
         sync_cout << "info string NNUE network loaded: " << nnue::net_name() << sync_endl;
     else
-        sync_cout << "info string No NNUE network found, using the hand-crafted evaluation"
+        sync_cout << "info string Could not load the embedded network, using the hand-crafted evaluation"
                   << sync_endl;
 }
 
@@ -211,7 +211,7 @@ void print_all() {
         << "option name Ponder type check default false\n"
         << "option name UCI_Chess960 type check default false\n"
         << "option name UCI_ShowWDL type check default false\n"
-        << "option name EvalFile type string default blitz.nnue\n"
+        << "option name EvalFile type string default " << nnue::EmbeddedName << "\n"
         << "option name Clear Hash type button" << sync_endl;
 }
 

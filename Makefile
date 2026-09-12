@@ -50,6 +50,8 @@ all: $(BIN)
 
 $(OBJECTS): .stamp
 
+$(SRCDIR)/nnue/network.o: blitz.nnue
+
 .stamp:
 	@echo "$(STAMP)" > $@
 

@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cstring>
 #include <fstream>
+#include <iterator>
+#include <vector>
 
 #if defined(__ARM_NEON)
     #include <arm_neon.h>
@@ -11,6 +13,32 @@
     #include <immintrin.h>
     #define BLITZ_AVX2 1
 #endif
+
+#if defined(__APPLE__)
+    #define BLITZ_NET_SECTION ".const_data\n"
+    #define BLITZ_NET_SYMBOL(name) "_" name
+#elif defined(_WIN32)
+    #define BLITZ_NET_SECTION ".section .rdata,\"dr\"\n"
+    #define BLITZ_NET_SYMBOL(name) name
+#else
+    #define BLITZ_NET_SECTION ".section .rodata\n"
+    #define BLITZ_NET_SYMBOL(name) name
+#endif
+
+__asm__(BLITZ_NET_SECTION
+        ".global " BLITZ_NET_SYMBOL("blitz_embedded_net") "\n"
+        ".balign 64\n"
+        BLITZ_NET_SYMBOL("blitz_embedded_net") ":\n"
+        ".incbin \"blitz.nnue\"\n"
+        "Lblitz_embedded_net_end:\n"
+        ".global " BLITZ_NET_SYMBOL("blitz_embedded_net_size") "\n"
+        ".balign 8\n"
+        BLITZ_NET_SYMBOL("blitz_embedded_net_size") ":\n"
+        ".quad Lblitz_embedded_net_end - " BLITZ_NET_SYMBOL("blitz_embedded_net") "\n"
+        ".text\n");
+
+extern "C" const unsigned char blitz_embedded_net[];
+extern "C" const unsigned long long blitz_embedded_net_size;
 
 namespace blitz::nnue {
 
@@ -171,33 +199,47 @@ std::string net_name() { return g_name; }
 
 void unload() { delete g_net; g_net = nullptr; g_name.clear(); }
 
-bool load(const std::string& path) {
-    std::ifstream f(path, std::ios::binary);
-    if (!f) return false;
+namespace {
 
-    u32 magic = 0, version = 0, hl = 0, buckets = 0, outBuckets = 0;
-    f.read(reinterpret_cast<char*>(&magic), 4);
-    f.read(reinterpret_cast<char*>(&version), 4);
-    f.read(reinterpret_cast<char*>(&hl), 4);
-    f.read(reinterpret_cast<char*>(&buckets), 4);
-    f.read(reinterpret_cast<char*>(&outBuckets), 4);
+bool load_from(const unsigned char* data, size_t size, const std::string& name) {
+    constexpr size_t HeaderSize = 5 * sizeof(u32);
+    if (size != HeaderSize + sizeof(Network::ftWeights) + sizeof(Network::ftBias)
+                             + sizeof(Network::outWeights) + sizeof(Network::outBias))
+        return false;
 
-    if (magic != NET_MAGIC || version != NET_VERSION
-        || hl != HL || buckets != KING_BUCKETS || outBuckets != OUTPUT_BUCKETS)
+    u32 header[5];
+    std::memcpy(header, data, HeaderSize);
+    if (header[0] != NET_MAGIC || header[1] != NET_VERSION || header[2] != u32(HL)
+        || header[3] != u32(KING_BUCKETS) || header[4] != u32(OUTPUT_BUCKETS))
         return false;
 
     Network* net = new (std::align_val_t(64)) Network;
-    f.read(reinterpret_cast<char*>(net->ftWeights), sizeof(net->ftWeights));
-    f.read(reinterpret_cast<char*>(net->ftBias), sizeof(net->ftBias));
-    f.read(reinterpret_cast<char*>(net->outWeights), sizeof(net->outWeights));
-    f.read(reinterpret_cast<char*>(net->outBias), sizeof(net->outBias));
-
-    if (!f) { delete net; return false; }
+    const unsigned char* p = data + HeaderSize;
+    std::memcpy(net->ftWeights, p, sizeof(net->ftWeights));   p += sizeof(net->ftWeights);
+    std::memcpy(net->ftBias, p, sizeof(net->ftBias));         p += sizeof(net->ftBias);
+    std::memcpy(net->outWeights, p, sizeof(net->outWeights)); p += sizeof(net->outWeights);
+    std::memcpy(net->outBias, p, sizeof(net->outBias));
 
     unload();
     g_net = net;
-    g_name = path;
+    g_name = name;
     return true;
+}
+
+}
+
+bool load_embedded() {
+    return load_from(blitz_embedded_net, size_t(blitz_embedded_net_size), EmbeddedName);
+}
+
+bool load(const std::string& path) {
+    if (path == EmbeddedName) return load_embedded();
+
+    std::ifstream f(path, std::ios::binary);
+    if (!f) return false;
+    std::vector<unsigned char> bytes((std::istreambuf_iterator<char>(f)),
+                                     std::istreambuf_iterator<char>());
+    return load_from(bytes.data(), bytes.size(), path);
 }
 
 void refresh_accumulator(const Position& pos, StateInfo* st) {
