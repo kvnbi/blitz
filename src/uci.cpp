@@ -35,7 +35,7 @@ constexpr auto StartFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 
 std::deque<StateInfo> g_states;
 
 struct OptionValues {
-    int  hash = 64;
+    int  hash = 256;
     int  threads = 1;
     int  multiPV = 1;
     int  moveOverhead = 30;
@@ -170,7 +170,7 @@ void set(const std::string& name, const std::string& value) {
     };
 
     if (name == "Hash") {
-        g_opt.hash = num(1, 1024 * 1024, 64);
+        g_opt.hash = num(1, 1024 * 1024, 256);
         TT.resize(size_t(g_opt.hash), g_opt.threads);
     } else if (name == "Threads") {
         g_opt.threads = num(1, 1024, 1);
@@ -204,7 +204,7 @@ void set(const std::string& name, const std::string& value) {
 
 void print_all() {
     sync_cout
-        << "option name Hash type spin default 64 min 1 max 1048576\n"
+        << "option name Hash type spin default 256 min 1 max 1048576\n"
         << "option name Threads type spin default 1 min 1 max 1024\n"
         << "option name MultiPV type spin default 1 min 1 max 256\n"
         << "option name Move Overhead type spin default 30 min 0 max 5000\n"

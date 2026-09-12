@@ -9,6 +9,7 @@
 #include <deque>
 #include <iostream>
 #include <sstream>
+#include <string>
 #include <vector>
 
 namespace blitz {
@@ -50,6 +51,9 @@ void benchmark(Position&, std::istream& is) {
         if (end != token.c_str() && d > 0) depth = int(d);
     }
 
+    int prevHash = Options::hash_mb();
+    Options::set("Hash", "64");
+
     u64 totalNodes = 0;
     TimePoint t0 = now();
 
@@ -72,6 +76,8 @@ void benchmark(Position&, std::istream& is) {
     }
 
     TimePoint elapsed = std::max<TimePoint>(1, now() - t0);
+    Options::set("Hash", std::to_string(prevHash));
+
     sync_cout << "\n==========================="
               << "\nDepth       : " << depth
               << "\nThreads     : " << threads

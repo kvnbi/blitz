@@ -18,6 +18,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: make -j4 CXX=g++ ARCH=x86-64-avx2
+      - run: 'echo "VERSION=$(printf "uci\nquit\n" | ./blitz | sed -n "s/^id name Blitz //p")" >> $GITHUB_ENV'
       - run: './blitz bench | grep -E "Nodes +: 339318$"'
       - run: 'printf "nnuecheck 50\nquit\n" | ./blitz | grep -E "compared, 0 mismatches$"'
       - run: pip install chess
@@ -35,10 +36,11 @@ jobs:
           name: games-linux
           path: games.pgn
           if-no-files-found: ignore
+      - run: cp blitz blitz-$VERSION-linux-x86-64-avx2
       - uses: actions/upload-artifact@v4
         with:
-          name: blitz-linux-x86-64-avx2
-          path: blitz
+          name: blitz-${{ env.VERSION }}-linux-x86-64-avx2
+          path: blitz-${{ env.VERSION }}-linux-x86-64-avx2
 
   windows:
     runs-on: windows-latest
@@ -55,6 +57,8 @@ jobs:
         run: make -j4 CXX=g++ ARCH=x86-64-avx2
       - shell: msys2 {0}
         run: 'objdump -p blitz.exe > imports.txt && ! grep -iE "libstdc|libgcc|libwinpthread" imports.txt'
+      - shell: bash
+        run: 'echo "VERSION=$(printf "uci\nquit\n" | ./blitz.exe | sed -n "s/^id name Blitz //p")" >> $GITHUB_ENV'
       - shell: bash
         run: './blitz.exe bench | grep -E "Nodes +: 339318$"'
       - shell: bash
@@ -83,10 +87,12 @@ jobs:
           name: games-windows
           path: games.pgn
           if-no-files-found: ignore
+      - shell: bash
+        run: cp blitz.exe blitz-$VERSION-windows-x86-64-avx2.exe
       - uses: actions/upload-artifact@v4
         with:
-          name: blitz-windows-x86-64-avx2
-          path: blitz.exe
+          name: blitz-${{ env.VERSION }}-windows-x86-64-avx2
+          path: blitz-${{ env.VERSION }}-windows-x86-64-avx2.exe
 
   macos:
     runs-on: macos-latest
@@ -96,6 +102,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: make -j4 ARCH=arm64
+      - run: 'echo "VERSION=$(printf "uci\nquit\n" | ./blitz | sed -n "s/^id name Blitz //p")" >> $GITHUB_ENV'
       - run: './blitz bench | grep -E "Nodes +: 339318$"'
       - run: 'printf "nnuecheck 50\nquit\n" | ./blitz | grep -E "compared, 0 mismatches$"'
       - run: pip install chess
@@ -113,7 +120,8 @@ jobs:
           name: games-macos
           path: games.pgn
           if-no-files-found: ignore
+      - run: cp blitz blitz-$VERSION-macos-arm64
       - uses: actions/upload-artifact@v4
         with:
-          name: blitz-macos-arm64
-          path: blitz
+          name: blitz-${{ env.VERSION }}-macos-arm64
+          path: blitz-${{ env.VERSION }}-macos-arm64
